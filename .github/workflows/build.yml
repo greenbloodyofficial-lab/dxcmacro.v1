@@ -1,3 +1,4 @@
+
 name: Build DXCFLIX STUDIO APK
 
 on:
@@ -23,40 +24,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Locate Project
-        shell: bash
+      - name: Extract Project ZIP
         run: |
-          ZIP_FILE="DXCFLIX_STUDIO_GitHub_Project_v1.0.zip"
-
-          if [ -f "$ZIP_FILE" ]; then
-            unzip -o "$ZIP_FILE" -d extracted
-          fi
-
-          if [ -f "DXCFLIX_STUDIO/settings.gradle" ]; then
-            echo "PROJECT_DIR=DXCFLIX_STUDIO" >> "$GITHUB_ENV"
-          elif [ -f "extracted/DXCFLIX_STUDIO/settings.gradle" ]; then
-            echo "PROJECT_DIR=extracted/DXCFLIX_STUDIO" >> "$GITHUB_ENV"
-          elif [ -f "settings.gradle" ]; then
-            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
-          else
-            echo "ERROR: Android project not found!"
-            exit 1
-          fi
+          unzip -o DXCFLIX_STUDIO_GitHub_Project_v1.1_SHIZUKU_FIX.zip -d extracted
 
       - name: Build Debug APK
-        shell: bash
         run: |
-          gradle -p "$PROJECT_DIR" :app:assembleDebug --no-daemon
+          gradle -p extracted/DXCFLIX_STUDIO :app:assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: DXCFLIX-STUDIO-APK
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
+          path: extracted/DXCFLIX_STUDIO/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-          
