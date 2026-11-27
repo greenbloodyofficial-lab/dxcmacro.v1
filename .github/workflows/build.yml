@@ -24,25 +24,43 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle 8.9
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Verify Project
-        working-directory: DXCFLIX_STUDIO
+      - name: Find Android Project
+        shell: bash
         run: |
-          ls -la
-          test -f settings.gradle
-          test -f app/build.gradle
+          echo "Searching for Gradle project..."
+
+          find . -type f \
+            \( -name settings.gradle -o -name settings.gradle.kts \) \
+            -not -path './.git/*' \
+            > /tmp/gradle-files.txt
+
+          cat /tmp/gradle-files.txt
+
+          SETTINGS_FILE=$(head -n 1 /tmp/gradle-files.txt)
+
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "ERROR: Gradle settings file not found!"
+            find . -maxdepth 4 -type f | head -200
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Found project: $PROJECT_DIR"
 
       - name: Build Debug APK
-        working-directory: DXCFLIX_STUDIO
-        run: gradle :app:assembleDebug --no-daemon
+        run: |
+          gradle -p "$PROJECT_DIR" :app:assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: DXCFLIX-STUDIO-APK
-          path: DXCFLIX_STUDIO/app/build/outputs/apk/debug/*.apk
+          path: '**/app/build/outputs/apk/debug/*.apk'
           if-no-files-found: error
