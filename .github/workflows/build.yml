@@ -1,0 +1,62 @@
+name: Build DXCFLIX STUDIO APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Locate Project
+        shell: bash
+        run: |
+          ZIP_FILE="DXCFLIX_STUDIO_GitHub_Project_v1.0.zip"
+
+          if [ -f "$ZIP_FILE" ]; then
+            unzip -o "$ZIP_FILE" -d extracted
+          fi
+
+          if [ -f "DXCFLIX_STUDIO/settings.gradle" ]; then
+            echo "PROJECT_DIR=DXCFLIX_STUDIO" >> "$GITHUB_ENV"
+          elif [ -f "extracted/DXCFLIX_STUDIO/settings.gradle" ]; then
+            echo "PROJECT_DIR=extracted/DXCFLIX_STUDIO" >> "$GITHUB_ENV"
+          elif [ -f "settings.gradle" ]; then
+            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
+          else
+            echo "ERROR: Android project not found!"
+            exit 1
+          fi
+
+      - name: Build Debug APK
+        shell: bash
+        run: |
+          gradle -p "$PROJECT_DIR" :app:assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DXCFLIX-STUDIO-APK
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          
