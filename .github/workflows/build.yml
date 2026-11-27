@@ -3,7 +3,9 @@ name: Build DXCFLIX STUDIO APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -15,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Setup Java 17
@@ -24,22 +26,17 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle 8.9
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Extract Project ZIP
-        run: |
-          unzip -o DXCFLIX_STUDIO_GitHub_Project_v1.1_SHIZUKU_FIX.zip -d extracted
-
       - name: Build Debug APK
-        run: |
-          gradle -p extracted/DXCFLIX_STUDIO :app:assembleDebug --no-daemon
+        run: gradle :app:assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DXCFLIX-STUDIO-APK
-          path: extracted/DXCFLIX_STUDIO/app/build/outputs/apk/debug/*.apk
+          name: DXCFLIX-STUDIO-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
